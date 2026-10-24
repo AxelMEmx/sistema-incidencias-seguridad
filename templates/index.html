@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Incidencias - Seguridad</title>
+</head>
+<body>
+    <h1>Panel de Control de Incidencias</h1>
+    <h2>Registrar Nueva Incidencia</h2>
+    <form action="/registrar" method="POST">
+        <label>Título:</label>
+        <input type="text" name="titulo" required>
+        
+        <label>Descripción:</label>
+        <input type="text" name="descripcion">
+        
+        <label>Nivel:</label>
+        <select name="nivel">
+            <option value="Baja">Baja</option>
+            <option value="Media">Media</option>
+            <option value="Alta">Alta</option>
+        </select>
+        
+        <!-- Para simplificar, simulamos que el Agente 1 está usando el sistema -->
+        <input type="hidden" name="usuario_id" value="1">
+        
+        <button type="submit">Guardar Incidencia</button>
+    </form>
+    <br>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Estado</th>
+            <th>Agente</th>
+        </tr>
+        <!-- El bucle for de Jinja2 iterará sobre los datos de PostgreSQL -->
+        {% for incidencia in incidencias %}
+        <tr>
+            <td>{{ incidencia[0] }}</td>
+            <td>{{ incidencia[1] }}</td>
+            <td>{{ incidencia[2] }}</td>
+            <td>{{ incidencia[3] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
