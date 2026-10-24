@@ -2,47 +2,133 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Incidencias - Seguridad</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGS - Sistema de Gestión de Seguridad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #e9ecef; }
+        .navbar { background-color: #611232; }
+        .card-header { background-color: #611232; color: white; }
+    </style>
 </head>
 <body>
-    <h1>Panel de Control de Incidencias</h1>
-    <h2>Registrar Nueva Incidencia</h2>
-    <form action="/registrar" method="POST">
-        <label>Título:</label>
-        <input type="text" name="titulo" required>
+
+    <nav class="navbar navbar-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">Sistema Federal de Registro de Incidencias</span>
+        </div>
+    </nav>
+
+    <div class="container">
         
-        <label>Descripción:</label>
-        <input type="text" name="descripcion">
-        
-        <label>Nivel:</label>
-        <select name="nivel">
-            <option value="Baja">Baja</option>
-            <option value="Media">Media</option>
-            <option value="Alta">Alta</option>
-        </select>
-        
-        <!-- Para simplificar, simulamos que el Agente 1 está usando el sistema -->
-        <input type="hidden" name="usuario_id" value="1">
-        
-        <button type="submit">Guardar Incidencia</button>
-    </form>
-    <br>
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>Título</th>
-            <th>Estado</th>
-            <th>Agente</th>
-        </tr>
-        <!-- El bucle for de Jinja2 iterará sobre los datos de PostgreSQL -->
-        {% for incidencia in incidencias %}
-        <tr>
-            <td>{{ incidencia[0] }}</td>
-            <td>{{ incidencia[1] }}</td>
-            <td>{{ incidencia[2] }}</td>
-            <td>{{ incidencia[3] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+        <!-- NUEVO: Panel de Estadísticas -->
+        <div class="row mb-4 text-center">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Reportes</h5>
+                        <h2 class="display-5 fw-bold">{{ total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Casos Pendientes</h5>
+                        <h2 class="display-5 fw-bold">{{ pendientes }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Alertas Críticas</h5>
+                        <h2 class="display-5 fw-bold">{{ criticas }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulario de Registro -->
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Registrar Nueva Alerta</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/registrar" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Título:</label>
+                                <input type="text" class="form-control" name="titulo" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Descripción:</label>
+                                <textarea class="form-control" name="descripcion" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Nivel:</label>
+                                <select class="form-select" name="nivel">
+                                    <option value="Baja">Baja</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Alta">Alta (Crítica)</option>
+                                </select>
+                            </div>
+                            <input type="hidden" name="usuario_id" value="1">
+                            <button type="submit" class="btn w-100 fw-bold" style="background-color: #611232; color: #FFFFFF;">Guardar en Bitácora</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Resultados -->
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0">Últimos Registros</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Incidencia</th>
+                                    <th>Estado</th>
+                                    <th>Agente</th>
+                                    <th>Acción</th> <!-- Nueva columna -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for incidencia in incidencias %}
+                                <tr>
+                                    <td><strong>#{{ incidencia[0] }}</strong></td>
+                                    <td>{{ incidencia[1] }}</td>
+                                    <td>
+                                        {% if incidencia[2] == 'Pendiente' %}
+                                            <span class="badge bg-warning text-dark">{{ incidencia[2] }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ incidencia[2] }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ incidencia[3] }}</td>
+                                    <td>
+                                        <!-- NUEVO: Botón de cambio de estado -->
+                                        {% if incidencia[2] == 'Pendiente' %}
+                                            <form action="/resolver/{{ incidencia[0] }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-success fw-bold">Resolver</button>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted small">Cerrado</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
